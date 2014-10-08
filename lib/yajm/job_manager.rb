@@ -117,6 +117,7 @@ module Yajm
     class << self
 
       def init
+        init_em unless EM.reactor_running?
         return if @process_watcher
 
         @process_watcher = ProcessWatch.new
@@ -126,6 +127,18 @@ module Yajm
           # Alert the process watcher that a process exited.
           @process_watcher.alert_exit
         end
+      end
+
+      def init_em
+        read, write = IO.pipe
+
+        Thread.new do
+          EM.run do
+            write.write('X')
+          end
+        end
+
+        IO.select([read])
       end
 
       def list
